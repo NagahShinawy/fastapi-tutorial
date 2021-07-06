@@ -1,38 +1,25 @@
 """
 created by Nagaj at 06/07/2021
 """
-import logging
-from http import HTTPStatus
 import uvicorn
 from fastapi import FastAPI
-
-app = FastAPI()
-
-
-@app.get("/")
-def health():
-    return {"status": "ok"}
+from app.api.v1.api import api_router
+from app import config
 
 
-@app.get("/users", status_code=HTTPStatus.OK)
-def users():
-    return {
-        "data": [
-            {"id": 1, "username": "John", "email": "john@test.com"},
-            {"id": 2, "username": "james", "email": "james@test.com"},
-        ]
-    }
+def create_app(conf):
+    """ Factory function for creating an application """
+    app = FastAPI(title=conf.PROJECT_NAME, version='0.0.1', openapi_url=conf.OPENAPI_URL, docs_url='/docs')
+    register_routers(app, conf)
+    return app
 
 
-@app.post("/users", status_code=HTTPStatus.CREATED)
-def users():
-    return {
-        "data": [
-            {"id": 3, "username": "Leon", "email": "leon@test.com"},
-        ],
-        "msg": "user <leon> was created"
-    }
+def register_routers(app, conf):
+    """ A place for mounting routers to the application """
+    app.include_router(api_router, prefix=conf.API_V1_STR)  # API_V1_STR = "/api/v1"
 
 
+application = create_app(config)
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8080, reload=True)
+
+    uvicorn.run("main:application", port=8080, reload=True)
